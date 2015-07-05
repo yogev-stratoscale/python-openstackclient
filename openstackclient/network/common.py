@@ -34,6 +34,11 @@ def find(client, resource, resources, name_or_id, name_attr='name'):
     if len(info) == 1:
         return info[0]['id']
     if len(info) > 1:
+        ret_val = [item for item in info if item[name_attr] == name_or_id]
+        if ret_val:
+            network = ret_val[0]
+            return network['id']
+ 
         msg = "More than one %s exists with the name '%s'."
         raise exceptions.CommandError(msg % (resource, name_or_id))
     # Search for by id
