@@ -254,6 +254,9 @@ class BaseAPI(KeystoneSession):
         if len(data) == 1:
             return data[0]
         if len(data) > 1:
+            ret_val = [item for item in data if item["name"] == value]
+            if ret_val:
+                return ret_val[0]
             msg = "Multiple %s exist with %s='%s'"
             raise ksc_exceptions.CommandError(
                 msg % (resource, attr, value),
