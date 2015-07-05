@@ -28,6 +28,146 @@ from openstackclient.api import utils as api_utils
 from openstackclient.common import parseractions
 from openstackclient.common import utils
 
+DEFAULT_CONTAINER_FORMAT = 'bare'
+DEFAULT_DISK_FORMAT = 'raw'
+
+
+class CreateImage(command.Command):
+    """Create/upload an image"""
+
+    import pdb; pdb.set_trace()
+    log = logging.getLogger(__name__ + ".CreateImage")
+
+    def get_parser(self, prog_name):
+        parser = super(CreateImage, self).get_parser(prog_name)
+        parser.add_argument(
+            "name",
+            metavar="<image-name>",
+            help="New image name",
+        )
+        parser.add_argument(
+            "--id",
+            metavar="<id>",
+            help="Image ID to reserve",
+        )
+        parser.add_argument(
+            "--store",
+            metavar="<store>",
+            help="Upload image to this store",
+        )
+        parser.add_argument(
+            "--container-format",
+            default=DEFAULT_CONTAINER_FORMAT,
+            metavar="<container-format>",
+            help="Image container format "
+                 "(default: %s)" % DEFAULT_CONTAINER_FORMAT,
+        )
+        parser.add_argument(
+            "--disk-format",
+            default=DEFAULT_DISK_FORMAT,
+            metavar="<disk-format>",
+            help="Image disk format "
+                 "(default: %s)" % DEFAULT_DISK_FORMAT,
+        )
+        parser.add_argument(
+            "--owner",
+            metavar="<project>",
+            help="Image owner project name or ID",
+        )
+        parser.add_argument(
+            "--size",
+            metavar="<size>",
+            help="Image size, in bytes (only used with --location and"
+                 " --copy-from)",
+        )
+        parser.add_argument(
+            "--min-disk",
+            metavar="<disk-gb>",
+            type=int,
+            help="Minimum disk size needed to boot image, in gigabytes",
+        )
+        parser.add_argument(
+            "--min-ram",
+            metavar="<ram-mb>",
+            type=int,
+            help="Minimum RAM size needed to boot image, in megabytes",
+        )
+        parser.add_argument(
+            "--location",
+            metavar="<image-url>",
+            help="Download image from an existing URL",
+        )
+        parser.add_argument(
+            "--copy-from",
+            metavar="<image-url>",
+            help="Copy image from the data store (similar to --location)",
+        )
+        parser.add_argument(
+            "--file",
+            metavar="<file>",
+            help="Upload image from local file",
+        )
+        parser.add_argument(
+            "--volume",
+            metavar="<volume>",
+            help="Create image from a volume",
+        )
+        parser.add_argument(
+            "--force",
+            dest='force',
+            action='store_true',
+            default=False,
+            help="Force image creation if volume is in use "
+                 "(only meaningful with --volume)",
+        )
+        parser.add_argument(
+            "--checksum",
+            metavar="<checksum>",
+            help="Image hash used for verification",
+        )
+        protected_group = parser.add_mutually_exclusive_group()
+        protected_group.add_argument(
+            "--protected",
+            action="store_true",
+            help="Prevent image from being deleted",
+        )
+        protected_group.add_argument(
+            "--unprotected",
+            action="store_true",
+            help="Allow image to be deleted (default)",
+        )
+        public_group = parser.add_mutually_exclusive_group()
+        public_group.add_argument(
+            "--public",
+            action="store_true",
+            help="Image is accessible to the public",
+        )
+        public_group.add_argument(
+            "--private",
+            action="store_true",
+            help="Image is inaccessible to the public (default)",
+        )
+        parser.add_argument(
+            "--property",
+            dest="properties",
+            metavar="<key=value>",
+            action=parseractions.KeyValueAction,
+            help="Set a property on this image "
+                 "(repeat option to set multiple properties)",
+        )
+        return parser
+
+    def take_action(self, parsed_args):
+        self.log.debug("take_action(%s)", parsed_args)
+
+        import pdb; pdb.set_trace()
+        image_client = self.app.client_manager.image
+        image = utils.find_resource(
+            image_client.images,
+            parsed_args.image,
+        )
+        # data = image_client.images.data(image)
+
 
 class DeleteImage(command.Command):
     """Delete image(s)"""
