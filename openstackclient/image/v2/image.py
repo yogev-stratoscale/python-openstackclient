@@ -129,68 +129,72 @@ class CreateImage(command.Command):
         if parsed_args.protected:
             kwargs['protected'] = True
 
-        if not parsed_args.location and not parsed_args.copy_from:
-            if parsed_args.volume:
-                volume_client = self.app.client_manager.volume
-                source_volume = utils.find_resource(
-                    volume_client.volumes,
-                    parsed_args.volume,
-                )
-                response, body = volume_client.volumes.upload_to_image(
-                    source_volume.id,
-                    parsed_args.force,
-                    parsed_args.name,
-                    parsed_args.container_format,
-                    parsed_args.disk_format,
-                )
-                info = body['os-volume_upload_image']
-            elif parsed_args.file:
-                # Send an open file handle to glanceclient so it will
-                # do a chunked transfer
-                kwargs["data"] = io.open(parsed_args.file, "rb")
-            else:
-                # Read file from stdin
-                if sys.stdin.isatty() is not True:
-                    if msvcrt:
-                        msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
-                    # Send an open file handle to glanceclient so it will
-                    # do a chunked transfer
-                    kwargs["data"] = sys.stdin
+        image = image_client.images.create(**kwargs)
+        return image
 
-        # Wrap the call to catch exceptions in order to close files
-        try:
-            try:
-                image = utils.find_resource(
-                    image_client.images,
-                    parsed_args.name,
-                )
 
-                # Preserve previous properties if any are being set now
-                if image.properties:
-                    if parsed_args.properties:
-                        image.properties.update(kwargs['properties'])
-                    kwargs['properties'] = image.properties
-
-            except exceptions.CommandError:
-                if not parsed_args.volume:
-                    # This is normal for a create or reserve (create w/o
-                    # an image), but skip for create from volume
-                    image = image_client.images.create(**kwargs)
-            else:
-                # Update an existing reservation
-
-                # If an image is specified via --file, --location or
-                # --copy-from let the API handle it
-                image = image_client.images.update(image.id, **kwargs)
-        finally:
-            # Clean up open files - make sure data isn't a string
-            if ('data' in kwargs and hasattr(kwargs['data'], 'close') and
-               kwargs['data'] != sys.stdin):
-                    kwargs['data'].close()
-
-        info = {}
-        info.update(image._info)
-        return zip(*sorted(six.iteritems(info)))
+#        if not parsed_args.location and not parsed_args.copy_from:
+#            if parsed_args.volume:
+#                volume_client = self.app.client_manager.volume
+#                source_volume = utils.find_resource(
+#                    volume_client.volumes,
+#                    parsed_args.volume,
+#                )
+#                response, body = volume_client.volumes.upload_to_image(
+#                    source_volume.id,
+#                    parsed_args.force,
+#                    parsed_args.name,
+#                    parsed_args.container_format,
+#                    parsed_args.disk_format,
+#                )
+#                info = body['os-volume_upload_image']
+#            elif parsed_args.file:
+#                # Send an open file handle to glanceclient so it will
+#                # do a chunked transfer
+#                kwargs["data"] = io.open(parsed_args.file, "rb")
+#            else:
+#                # Read file from stdin
+#                if sys.stdin.isatty() is not True:
+#                    if msvcrt:
+#                        msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
+#                    # Send an open file handle to glanceclient so it will
+#                    # do a chunked transfer
+#                    kwargs["data"] = sys.stdin
+#
+#        # Wrap the call to catch exceptions in order to close files
+#        try:
+#            try:
+#                image = utils.find_resource(
+#                    image_client.images,
+#                    parsed_args.name,
+#                )
+#
+#                # Preserve previous properties if any are being set now
+#                if image.properties:
+#                    if parsed_args.properties:
+#                        image.properties.update(kwargs['properties'])
+#                    kwargs['properties'] = image.properties
+#
+#            except exceptions.CommandError:
+#                if not parsed_args.volume:
+#                    # This is normal for a create or reserve (create w/o
+#                    # an image), but skip for create from volume
+#                    image = image_client.images.create(**kwargs)
+#            else:
+#                # Update an existing reservation
+#
+#                # If an image is specified via --file, --location or
+#                # --copy-from let the API handle it
+#                image = image_client.images.update(image.id, **kwargs)
+#        finally:
+#            # Clean up open files - make sure data isn't a string
+#            if ('data' in kwargs and hasattr(kwargs['data'], 'close') and
+#               kwargs['data'] != sys.stdin):
+#                    kwargs['data'].close()
+#
+#        info = {}
+#        info.update(image._info)
+#        return zip(*sorted(six.iteritems(info)))
 
 
 
