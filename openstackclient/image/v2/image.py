@@ -16,8 +16,10 @@
 """Image V2 Action Implementations"""
 
 import argparse
+import io
 import logging
 import six
+import sys
 
 from cliff import command
 from cliff import lister
@@ -31,7 +33,96 @@ from openstackclient.common import utils
 DEFAULT_CONTAINER_FORMAT = 'bare'
 DEFAULT_DISK_FORMAT = 'raw'
 
+class PutDataImage(command.Command):
+    """Uploads raw image data."""
 
+    log = logging.getLogger(__name__ + ".PutDataImage")
+
+    def get_parser(self, prog_name):
+        parser = super(PutDataImage, self).get_parser(prog_name)
+        parser.add_argument(
+            "image_id",
+            metavar="<image-id>",
+            help="Image id to upload raw data",
+        )
+        parser.add_argument(
+            "--file",
+            metavar="<file>",
+            help="Upload image from local file",
+        )
+        return parser
+
+
+    def take_action(self, parsed_args):
+        self.log.debug("take_action(%s)", parsed_args)
+        image_client = self.app.client_manager.image
+        
+        kwargs = {}
+        if parsed_args.file:
+            # Send an open file handle to glanceclient so it will
+            # do a chunked transfer
+            kwargs["data"] = io.open(parsed_args.file, "rb")
+
+        # Wrap the call to catch exceptions in order to close files 
+        try:
+            # Update an existing reservation
+            
+            # If an image is specified via --file, --location or                                                   
+            # --copy-from let the API handle it                                                                    
+            image = image_client.images.update(parsed_args.image_id, **kwargs) 
+        finally:
+            # Clean up open files - make sure data isn't a string
+            if ('data' in kwargs and hasattr(kwargs['data'], 'close') and
+                kwargs['data'] != sys.stdin):
+                    kwargs['data'].close()
+                                                                                                                       
+        info = {}                                                                                                      
+        info.update(image._info)                                                                                       
+        return zip(*sorted(six.iteritems(info)))    
+	
+
+class GetDataImage(command.Command):
+    """Downloads raw image data."""
+
+    log = logging.getLogger(__name__ + ".GetDataImage")
+
+    def get_parser(self, prog_name):
+        parser = super(GetDataImage, self).get_parser(prog_name)
+        parser.add_argument(
+            "image_id",
+            metavar="<image-id>",
+            help="Image id to upload raw data",
+        )
+        return parser
+
+    def take_action(self, parsed_args):
+        self.log.debug("take_action(%s)", parsed_args)
+        image_client = self.app.client_manager.image
+        
+        kwargs = {}
+        if parsed_args.file:
+            # Send an open file handle to glanceclient so it will
+            # do a chunked transfer
+            kwargs["data"] = io.open(parsed_args.file, "rb")
+
+        # Wrap the call to catch exceptions in order to close files 
+        try:
+            # Update an existing reservation
+            
+            # If an image is specified via --file, --location or                                                   
+            # --copy-from let the API handle it                                                                    
+            image = image_client.images.update(parsed_args.id, **kwargs)                                                 
+        finally:                                                                                                       
+            # Clean up open files - make sure data isn't a string                                                      
+            if ('data' in kwargs and hasattr(kwargs['data'], 'close') and                                              
+                kwargs['data'] != sys.stdin):                                                                           
+                    kwargs['data'].close()                                                                             
+                                                                                                                       
+        info = {}                                                                                                      
+        info.update(image._info)                                                                                       
+        return zip(*sorted(six.iteritems(info)))    
+
+                                                                                                                                               
 class CreateImage(command.Command):
     """Create/upload an image"""
 
