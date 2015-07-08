@@ -19,6 +19,7 @@ import argparse
 import io
 import logging
 import six
+import os
 import sys
 
 from cliff import command
@@ -61,7 +62,8 @@ class PutDataImage(command.Command):
         if parsed_args.file:
             # Send an open file handle to glanceclient so it will
             # do a chunked transfer
-            kwargs["data"] = io.open(parsed_args.file, "rb")
+            kwargs["image_data"] = io.open(parsed_args.file, "rb")
+            # kwargs["image_size"] = os.path.getsize(parsed_args.file)
 
         # Wrap the call to catch exceptions in order to close files 
         try:
@@ -69,17 +71,14 @@ class PutDataImage(command.Command):
             
             # If an image is specified via --file, --location or                                                   
             # --copy-from let the API handle it                                                                    
-            image = image_client.images.update(parsed_args.image_id, **kwargs) 
+            #image = image_client.images.update(parsed_args.image_id, **kwargs) 
+            image = image_client.images.upload(parsed_args.image_id, **kwargs) 
         finally:
             # Clean up open files - make sure data isn't a string
-            if ('data' in kwargs and hasattr(kwargs['data'], 'close') and
-                kwargs['data'] != sys.stdin):
-                    kwargs['data'].close()
-                                                                                                                       
-        info = {}                                                                                                      
-        info.update(image._info)                                                                                       
-        return zip(*sorted(six.iteritems(info)))    
-	
+            if ('image_data' in kwargs and hasattr(kwargs['image_data'], 'close') and
+                kwargs['image_data'] != sys.stdin):
+                    kwargs['image_data'].close()
+        return 
 
 class GetDataImage(command.Command):
     """Downloads raw image data."""
