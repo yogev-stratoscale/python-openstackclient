@@ -88,6 +88,11 @@ class CreateVolume(show.ShowOne):
             help='Set a property on this volume '
                  '(repeat option to set multiple properties)',
         )
+        parser.add_argument(
+            '--user',
+            metavar='<user>',
+            help='<user> ID',
+        )
 
         return parser
 
@@ -100,7 +105,7 @@ class CreateVolume(show.ShowOne):
         volume_client = self.app.client_manager.volume
 
         source_volume = None
-        if parsed_args.source:
+        if parsed_args.source_volid:
             source_volume = utils.find_resource(
                 volume_client.volumes,
                 parsed_args.source_volid,
@@ -109,16 +114,13 @@ class CreateVolume(show.ShowOne):
         project = None
         if parsed_args.project:
             project = utils.find_resource(
-                identity_client.tenants,
+                identity_client.projects,
                 parsed_args.project,
             ).id
 
         image = None
-        if parsed_args.image:
-            image = utils.find_resource(
-                image_client.images,
-                parsed_args.imageRef,
-            ).id
+        if parsed_args.imageRef:
+            image = image_client.images.get(parsed_args.imageRef)
 
         snapshot = parsed_args.snapshot_id
 
@@ -129,11 +131,11 @@ class CreateVolume(show.ShowOne):
             parsed_args.name,
             parsed_args.description,
             parsed_args.volume_type,
-            user,
+            parsed_args.user,
             project,
             parsed_args.availability_zone,
             parsed_args.metadata,
-            image,
+            image.id,
         )
         # Map 'metadata' column to 'properties'
         volume._info.update(

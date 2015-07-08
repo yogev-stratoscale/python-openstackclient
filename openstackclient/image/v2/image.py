@@ -294,7 +294,7 @@ class DeleteImage(command.Command):
     log = logging.getLogger(__name__ + ".DeleteImage")
 
     def get_parser(self, prog_name):
-        parser = super(DeleteImage, aelf).get_parser(prog_name)
+        parser = super(DeleteImage, self).get_parser(prog_name)
 
         parser.add_argument(
             "images",
