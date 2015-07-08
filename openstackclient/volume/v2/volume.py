@@ -14,13 +14,136 @@
 
 """Volume V2 Volume action implementations"""
 
+import argparse
 import logging
+import six
 
 from cliff import command
 from cliff import show
 import six
 
+from openstackclient.common import parseractions
 from openstackclient.common import utils
+
+
+class CreateVolume(show.ShowOne):
+    """Create new volume"""
+
+    log = logging.getLogger(__name__ + '.CreateVolume')
+
+    def get_parser(self, prog_name):
+        parser = super(CreateVolume, self).get_parser(prog_name)
+        parser.add_argument(
+            'project',
+            metavar='<project>',
+            help='Specify an alternate project (name or ID)',
+        )
+        parser.add_argument(
+            '--availability-zone',
+            metavar='<availability-zone>',
+            help='Create new volume in <availability-zone>',
+        )
+        parser.add_argument(
+            '--source_volid',
+            metavar='<source_volid>',
+            help='To create a volume from an existing volume, specify the <source_volid> of the existing volume.'
+                 'The volume is created with the same size as the source volume.',
+        )
+        parser.add_argument(
+            '--description',
+            metavar='<description>',
+            help='New volume description',
+        )
+        parser.add_argument(
+            '--snapshot-id',
+            metavar='<snapshot-id>',
+            help=argparse.SUPPRESS,
+        )
+        parser.add_argument(
+            '--size',
+            metavar='<size>',
+            required=True,
+            type=int,
+            help='New volume size in GB',
+        )
+        parser.add_argument(
+            '--name',
+            metavar='<name>',
+            help='New volume name',
+        )
+        parser.add_argument(
+            '--imageRef',
+            metavar='<imageReg>',
+            help='The ID of the <imageReg> from which you want to create the volume. Required to create a bootable volume.',
+        )
+        parser.add_argument(
+            '--volume_type',
+            metavar='<volume-type>',
+            help='Use <volume-type> as the new volume type',
+        )
+        parser.add_argument(
+            '--metadata' ,
+            metavar='<key=value>',
+            action=parseractions.KeyValueAction,
+            help='Set a property on this volume '
+                 '(repeat option to set multiple properties)',
+        )
+
+        return parser
+
+
+    def take_action(self, parsed_args):
+        self.log.debug('take_action(%s)', parsed_args)
+
+        identity_client = self.app.client_manager.identity
+        image_client = self.app.client_manager.image
+        volume_client = self.app.client_manager.volume
+
+        source_volume = None
+        if parsed_args.source:
+            source_volume = utils.find_resource(
+                volume_client.volumes,
+                parsed_args.source_volid,
+            ).id
+
+        project = None
+        if parsed_args.project:
+            project = utils.find_resource(
+                identity_client.tenants,
+                parsed_args.project,
+            ).id
+
+        image = None
+        if parsed_args.image:
+            image = utils.find_resource(
+                image_client.images,
+                parsed_args.imageRef,
+            ).id
+
+        snapshot = parsed_args.snapshot_id
+
+        volume = volume_client.volumes.create(
+            parsed_args.size,
+            snapshot,
+            source_volume,
+            parsed_args.name,
+            parsed_args.description,
+            parsed_args.volume_type,
+            user,
+            project,
+            parsed_args.availability_zone,
+            parsed_args.metadata,
+            image,
+        )
+        # Map 'metadata' column to 'properties'
+        volume._info.update(
+            {
+                'properties': utils.format_dict(volume._info.pop('metadata')),
+                'type': volume._info.pop('volume_type'),
+            },
+        )
+
+        return zip(*sorted(six.iteritems(volume._info)))
 
 
 class DeleteVolume(command.Command):
