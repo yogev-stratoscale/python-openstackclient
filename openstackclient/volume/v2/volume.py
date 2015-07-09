@@ -122,20 +122,22 @@ class CreateVolume(show.ShowOne):
         if parsed_args.imageRef:
             image = image_client.images.get(parsed_args.imageRef)
 
-        snapshot = parsed_args.snapshot_id
-
         volume = volume_client.volumes.create(
-            parsed_args.size,
-            snapshot,
-            source_volume,
-            parsed_args.name,
-            parsed_args.description,
-            parsed_args.volume_type,
-            parsed_args.user,
-            project,
-            parsed_args.availability_zone,
-            parsed_args.metadata,
-            image.id,
+            size=parsed_args.size,
+            consistencygroup_id=None, 
+            snapshot_id=parsed_args.snapshot_id,
+            source_volid=source_volume,
+            name=parsed_args.name,
+            description=parsed_args.description,
+            volume_type=parsed_args.volume_type,
+            user_id=parsed_args.user,
+            project_id=project,
+            availability_zone=parsed_args.availability_zone,
+            metadata=parsed_args.metadata,
+            imageRef=image.id,
+            scheduler_hints=None,
+            source_replica=None, 
+            multiattach=False
         )
         # Map 'metadata' column to 'properties'
         volume._info.update(
