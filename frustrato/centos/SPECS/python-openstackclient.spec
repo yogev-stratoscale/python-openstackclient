@@ -1,14 +1,12 @@
 Name:             python-openstackclient
-Version:          1.0.3
-Release:          1%{?dist}
+Version:          1.5.0
+Release:          strato%{buildid}%{?dist}
 Summary:          OpenStack Command-line Client
 
 Group:            Development/Languages
 License:          ASL 2.0
 URL:              http://github.com/openstack/python-openstackclient
 Source0:          http://pypi.python.org/packages/source/p/%{name}/%{name}-%{version}.tar.gz
-
-Patch0001: 0001-Remove-runtime-dependency-on-python-pbr.patch
 
 BuildArch:        noarch
 
@@ -56,16 +54,16 @@ This package contains auto-generated documentation.
 
 
 %prep
-%setup -q
+%setup -q -n python-openstackclient-%{version}%{buildid}
 
 # Use git to manage patches.
 # http://rwmj.wordpress.com/2011/08/09/nice-rpm-git-patch-management-trick/
-git init
-git config user.email "%{name}-owner@fedoraproject.org"
-git config user.name "%{name}"
-git add .
-git commit -a -q -m "%{version} baseline"
-git am %{patches}
+# git init
+# git config user.email "%{name}-owner@fedoraproject.org"
+# git config user.name "%{name}"
+# git add .
+# git commit -a -q -m "%{version} baseline"
+# git am %{patches}
 
 # We provide version like this in order to remove runtime dep on pbr
 sed -i s/REDHATOPENSTACKCLIENTVERSION/%{version}/ openstackclient/__init__.py
